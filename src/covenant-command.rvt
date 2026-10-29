@@ -1,0 +1,445 @@
+-- UNSC vs Covenant. Compile using faction-battlefront-template.json.
+-- The deployment service owns class purchases and native respawns; this
+-- script owns rewards, victory conditions and every piece of its UI: the
+-- reinforcement bars, the status lines and the class picker, built from
+-- script widgets. Teams 0/1 are UNSC/Covenant.
+--
+-- Widgets draw in order, so the picker's backdrop comes before what is on
+-- it. 0/1 UNSC/Covenant reinforcements, 2 battle time or result; picker: 3
+-- backdrop, 4 title, 5 points, 6 status, 7 hint, 8-21 class cards (UNSC
+-- classes 0-13, Covenant classes 14-27); 22 points while deployed.
+alias phase = global.number[0]
+alias unsc = global.number[1]
+alias covenant = global.number[2]
+alias unsc_players = global.number[3]
+alias covenant_players = global.number[4]
+alias scratch = global.number[5]
+alias points = global.number[6]
+alias seconds = global.number[7]
+alias class = global.number[8]
+alias remaining = global.timer[0]
+alias income = global.timer[1]
+alias kills = player.number[0]
+alias deaths = player.number[1]
+-- 1 while the player chooses a class, and 1 while their picker is drawn.
+alias choosing = player.number[2]
+alias picker = player.number[3]
+
+on init: do
+    unsc = script_option[1]
+    covenant = script_option[1]
+    remaining = script_option[2]
+    income = 30
+    -- Reinforcement bars and the battle line, for everyone.
+    script_widget[0].set_position(all_players, 628, 18)
+    script_widget[0].set_anchor(all_players, top_right)
+    script_widget[0].set_size(all_players, 260, 0)
+    script_widget[0].set_alignment(all_players, right)
+    script_widget[0].set_color(all_players, 90, 170, 255, 255)
+    script_widget[0].set_font_size(all_players, 18)
+    script_widget[1].set_position(all_players, 652, 18)
+    script_widget[1].set_size(all_players, 260, 0)
+    script_widget[1].set_color(all_players, 190, 150, 255, 255)
+    script_widget[1].set_font_size(all_players, 18)
+    script_widget[2].set_position(all_players, 640, 82)
+    script_widget[2].set_anchor(all_players, top)
+    script_widget[2].set_font_size(all_players, 15)
+    script_widget[22].set_position(all_players, 24, 696)
+    script_widget[22].set_anchor(all_players, bottom_left)
+    script_widget[22].set_color(all_players, 232, 184, 82, 255)
+    script_widget[22].set_font_size(all_players, 14)
+    -- The class picker: a backdrop, its title, points, status and hint
+    -- lines, and fourteen cards. Each player is shown it while they choose.
+    script_widget[3].set_position(all_players, 640, 112)
+    script_widget[3].set_anchor(all_players, top)
+    script_widget[3].set_size(all_players, 1200, 568)
+    script_widget[3].set_background(all_players, 7, 14, 23, 235)
+    script_widget[4].set_position(all_players, 80, 126)
+    script_widget[4].set_font_size(all_players, 30)
+    script_widget[5].set_position(all_players, 80, 172)
+    script_widget[5].set_color(all_players, 232, 184, 82, 255)
+    script_widget[5].set_font_size(all_players, 20)
+    script_widget[6].set_text("Click a class to deploy. Purchases last for this life; unspent points survive death.")
+    script_widget[6].set_position(all_players, 80, 202)
+    script_widget[6].set_color(all_players, 150, 160, 175, 255)
+    script_widget[6].set_font_size(all_players, 14)
+    script_widget[7].set_text("Enemy kills earn points. Both factions also earn 25 points every 30 seconds.")
+    script_widget[7].set_position(all_players, 640, 668)
+    script_widget[7].set_anchor(all_players, bottom)
+    script_widget[7].set_color(all_players, 150, 160, 175, 255)
+    script_widget[7].set_font_size(all_players, 13)
+    script_widget[8].set_position(all_players, 80, 232)
+    script_widget[8].set_size(all_players, 270, 88)
+    script_widget[8].set_background(all_players, 15, 27, 39, 255)
+    script_widget[8].set_clickable(all_players, true)
+    script_widget[9].set_position(all_players, 365, 232)
+    script_widget[9].set_size(all_players, 270, 88)
+    script_widget[9].set_background(all_players, 15, 27, 39, 255)
+    script_widget[9].set_clickable(all_players, true)
+    script_widget[10].set_position(all_players, 650, 232)
+    script_widget[10].set_size(all_players, 270, 88)
+    script_widget[10].set_background(all_players, 15, 27, 39, 255)
+    script_widget[10].set_clickable(all_players, true)
+    script_widget[11].set_position(all_players, 935, 232)
+    script_widget[11].set_size(all_players, 270, 88)
+    script_widget[11].set_background(all_players, 15, 27, 39, 255)
+    script_widget[11].set_clickable(all_players, true)
+    script_widget[12].set_position(all_players, 80, 332)
+    script_widget[12].set_size(all_players, 270, 88)
+    script_widget[12].set_background(all_players, 15, 27, 39, 255)
+    script_widget[12].set_clickable(all_players, true)
+    script_widget[13].set_position(all_players, 365, 332)
+    script_widget[13].set_size(all_players, 270, 88)
+    script_widget[13].set_background(all_players, 15, 27, 39, 255)
+    script_widget[13].set_clickable(all_players, true)
+    script_widget[14].set_position(all_players, 650, 332)
+    script_widget[14].set_size(all_players, 270, 88)
+    script_widget[14].set_background(all_players, 15, 27, 39, 255)
+    script_widget[14].set_clickable(all_players, true)
+    script_widget[15].set_position(all_players, 935, 332)
+    script_widget[15].set_size(all_players, 270, 88)
+    script_widget[15].set_background(all_players, 15, 27, 39, 255)
+    script_widget[15].set_clickable(all_players, true)
+    script_widget[16].set_position(all_players, 80, 432)
+    script_widget[16].set_size(all_players, 270, 88)
+    script_widget[16].set_background(all_players, 15, 27, 39, 255)
+    script_widget[16].set_clickable(all_players, true)
+    script_widget[17].set_position(all_players, 365, 432)
+    script_widget[17].set_size(all_players, 270, 88)
+    script_widget[17].set_background(all_players, 15, 27, 39, 255)
+    script_widget[17].set_clickable(all_players, true)
+    script_widget[18].set_position(all_players, 650, 432)
+    script_widget[18].set_size(all_players, 270, 88)
+    script_widget[18].set_background(all_players, 15, 27, 39, 255)
+    script_widget[18].set_clickable(all_players, true)
+    script_widget[19].set_position(all_players, 935, 432)
+    script_widget[19].set_size(all_players, 270, 88)
+    script_widget[19].set_background(all_players, 15, 27, 39, 255)
+    script_widget[19].set_clickable(all_players, true)
+    script_widget[20].set_position(all_players, 80, 532)
+    script_widget[20].set_size(all_players, 270, 88)
+    script_widget[20].set_background(all_players, 15, 27, 39, 255)
+    script_widget[20].set_clickable(all_players, true)
+    script_widget[21].set_position(all_players, 365, 532)
+    script_widget[21].set_size(all_players, 270, 88)
+    script_widget[21].set_background(all_players, 15, 27, 39, 255)
+    script_widget[21].set_clickable(all_players, true)
+end
+
+-- A click on a card deploys its class, when the player may.
+on widget click: do
+    if clicked_widget >= 8 and clicked_widget <= 21 then
+        class = clicked_widget
+        class -= 8
+        if current_player.team == team[1] then class += 14 end
+        scratch = current_player.deploy_class(class)
+        if scratch == 0 then
+            script_widget[6].set_text_for(current_player, "That class costs more points than you have, or it is full.")
+            script_widget[6].set_color(current_player, 255, 120, 100, 255)
+        end
+    end
+end
+
+if phase != 2 then
+    unsc_players = 0
+    covenant_players = 0
+    for each player do
+        if current_player.team == team[0] then unsc_players += 1 end
+        if current_player.team == team[1] then covenant_players += 1 end
+        -- Enemy kills count even when a projectile lands after our death.
+        -- This is a wallet, independent of the native team/scoreboard score.
+        scratch = current_player.get_kill_count()
+        scratch -= current_player.kills
+        if scratch > 0 then
+            scratch *= script_option[0]
+            points = current_player.get_deployment_points()
+            points += scratch
+            if points > 100000 then points = 100000 end
+            current_player.set_deployment_points(points)
+        end
+        current_player.kills = current_player.get_kill_count()
+        scratch = current_player.get_death_count()
+        scratch -= current_player.deaths
+        if phase == 1 and scratch > 0 then
+            if current_player.team == team[0] then unsc -= scratch end
+            if current_player.team == team[1] then covenant -= scratch end
+        end
+        current_player.deaths = current_player.get_death_count()
+    end
+    if unsc < 0 then unsc = 0 end
+    if covenant < 0 then covenant = 0 end
+    if phase == 0 then
+        script_widget[2].set_text("Waiting for both factions")
+        if unsc_players > 0 and covenant_players > 0 then
+            phase = 1
+            remaining.set_rate(-100%)
+            income.set_rate(-100%)
+        end
+    end
+    if phase == 1 then
+        seconds = remaining
+        script_widget[2].set_text("Time: %n", seconds)
+        if unsc == 0 or covenant == 0 or remaining.is_zero() then
+            phase = 2
+            if unsc > covenant then
+                script_widget[2].set_text("UNSC victory")
+                team[0].end_round()
+            end
+            if covenant > unsc then
+                script_widget[2].set_text("Covenant victory")
+                team[1].end_round()
+            end
+            if unsc == covenant then
+                script_widget[2].set_text("Battle ended in a draw")
+                game.end_round()
+            end
+        end
+    end
+    -- Shared income includes players waiting to deploy, but only during battle.
+    if phase == 1 and income.is_zero() then
+        for each player do
+            if current_player.team == team[0] or current_player.team == team[1] then
+                points = current_player.get_deployment_points()
+                points += 25
+                if points > 100000 then points = 100000 end
+                current_player.set_deployment_points(points)
+            end
+        end
+        income = 30
+        income.set_rate(-100%)
+    end
+    script_widget[0].set_text("UNSC  %n", unsc)
+    script_widget[0].set_meter_params(number, unsc, script_option[1])
+    script_widget[1].set_text("%n  COVENANT", covenant)
+    script_widget[1].set_meter_params(number, covenant, script_option[1])
+    script_widget[0].set_visibility(all_players, true)
+    script_widget[1].set_visibility(all_players, true)
+    script_widget[2].set_visibility(all_players, true)
+end
+
+for each player do
+    -- Dead without a class once the respawn countdown ends: choosing. A
+    -- chosen class waits for a safe spawn.
+    current_player.choosing = 0
+    class = current_player.get_deployment_class()
+    seconds = current_player.get_respawn_time()
+    if not current_player.is_not_respawning() and class == -1 and seconds == 0 and phase != 2 then
+        current_player.choosing = 1
+    end
+    if current_player.choosing == 1 and current_player.picker == 0 then
+        current_player.set_ui_menu(true)
+        if current_player.team == team[0] then
+            script_widget[4].set_text_for(current_player, "UNSC  -  CHOOSE YOUR CLASS")
+            script_widget[3].set_border(current_player, 90, 170, 255, 140)
+            script_widget[8].set_text_for(current_player, "Marine Rifleman  |  Assault Rifle  |  FREE")
+            script_widget[9].set_text_for(current_player, "Marine Scout  |  SMG + Magnum  |  50")
+            script_widget[10].set_text_for(current_player, "Marine Marksman  |  Battle Rifle  |  150")
+            script_widget[11].set_text_for(current_player, "Marine Breacher  |  Shotgun + Magnum  |  150")
+            script_widget[12].set_text_for(current_player, "ODST  |  Battle Rifle + SMG  |  250")
+            script_widget[13].set_text_for(current_player, "Marine Heavy  |  Rocket Launcher + Assault Rifle  |  250")
+            script_widget[14].set_text_for(current_player, "Marine Sniper  |  Sniper Rifle + Automag  |  250")
+            script_widget[15].set_text_for(current_player, "ODST Recon  |  Silenced SMG + Automag  |  250")
+            script_widget[16].set_text_for(current_player, "ODST Heavy  |  Shotgun + Rocket Launcher  |  300")
+        alt
+            script_widget[4].set_text_for(current_player, "COVENANT  -  CHOOSE YOUR CLASS")
+            script_widget[3].set_border(current_player, 190, 150, 255, 140)
+            script_widget[8].set_text_for(current_player, "Grunt Minor  |  Needler  |  FREE")
+            script_widget[9].set_text_for(current_player, "Grunt Heavy  |  Fuel Rod Gun  |  100")
+            script_widget[10].set_text_for(current_player, "Jackal Shieldbearer  |  Plasma Pistol  |  FREE")
+            script_widget[11].set_text_for(current_player, "Jackal Carbine Specialist  |  Carbine  |  FREE")
+            script_widget[12].set_text_for(current_player, "Jackal Sniper  |  Beam Rifle  |  150")
+            script_widget[13].set_text_for(current_player, "Brute Minor  |  Spiker  |  100")
+            script_widget[14].set_text_for(current_player, "Elite Minor  |  Plasma Rifle  |  150")
+        end
+        script_widget[6].set_text_for(current_player, "Click a class to deploy. Purchases last for this life; unspent points survive death.")
+        script_widget[6].set_color(current_player, 150, 160, 175, 255)
+        current_player.picker = 1
+    end
+    if current_player.choosing == 0 and current_player.picker == 1 then
+        current_player.set_ui_menu(false)
+        current_player.picker = 0
+    end
+    script_widget[3].set_visibility(current_player, current_player.choosing)
+    script_widget[4].set_visibility(current_player, current_player.choosing)
+    script_widget[5].set_visibility(current_player, current_player.choosing)
+    script_widget[6].set_visibility(current_player, current_player.choosing)
+    script_widget[7].set_visibility(current_player, current_player.choosing)
+    script_widget[8].set_visibility(current_player, current_player.choosing)
+    script_widget[9].set_visibility(current_player, current_player.choosing)
+    script_widget[10].set_visibility(current_player, current_player.choosing)
+    script_widget[11].set_visibility(current_player, current_player.choosing)
+    script_widget[12].set_visibility(current_player, current_player.choosing)
+    script_widget[13].set_visibility(current_player, current_player.choosing)
+    script_widget[14].set_visibility(current_player, current_player.choosing)
+    script_widget[15].set_visibility(current_player, current_player.choosing)
+    script_widget[16].set_visibility(current_player, current_player.choosing)
+    script_widget[17].set_visibility(current_player, current_player.choosing)
+    script_widget[18].set_visibility(current_player, current_player.choosing)
+    script_widget[19].set_visibility(current_player, current_player.choosing)
+    script_widget[20].set_visibility(current_player, current_player.choosing)
+    script_widget[21].set_visibility(current_player, current_player.choosing)
+    if current_player.choosing == 1 then
+        points = current_player.get_deployment_points()
+        script_widget[5].set_text_for(current_player, "%n DEPLOYMENT POINTS", points)
+        class = 0
+        if current_player.team == team[1] then class = 14 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[8].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[8].set_color(current_player, 235, 240, 245, 255) end
+        class = 1
+        if current_player.team == team[1] then class = 15 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[9].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[9].set_color(current_player, 235, 240, 245, 255) end
+        class = 2
+        if current_player.team == team[1] then class = 16 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[10].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[10].set_color(current_player, 235, 240, 245, 255) end
+        class = 3
+        if current_player.team == team[1] then class = 17 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[11].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[11].set_color(current_player, 235, 240, 245, 255) end
+        class = 4
+        if current_player.team == team[1] then class = 18 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[12].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[12].set_color(current_player, 235, 240, 245, 255) end
+        class = 5
+        if current_player.team == team[1] then class = 19 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[13].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[13].set_color(current_player, 235, 240, 245, 255) end
+        class = 6
+        if current_player.team == team[1] then class = 20 end
+        scratch = game.get_deployment_cost(class)
+        script_widget[14].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[14].set_color(current_player, 235, 240, 245, 255) end
+        class = 7
+        if current_player.team == team[1] then class = 21 end
+        if current_player.team == team[1] then
+            script_widget[15].set_text_for(current_player, "Brute Captain  |  Brute Shot + Carbine  |  300  |  %n/%n", game.get_deployment_occupied(21), game.get_deployment_limit(21))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[15].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[15].set_color(current_player, 235, 240, 245, 255) end
+        class = 8
+        if current_player.team == team[1] then class = 22 end
+        if current_player.team == team[1] then
+            script_widget[16].set_text_for(current_player, "Elite Spec Ops  |  Carbine + Energy Sword  |  300  |  %n/%n", game.get_deployment_occupied(22), game.get_deployment_limit(22))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[16].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[16].set_color(current_player, 235, 240, 245, 255) end
+        class = 9
+        if current_player.team == team[1] then class = 23 end
+        if current_player.team == team[0] then
+            script_widget[17].set_text_for(current_player, "Spartan  |  Assault Rifle + Battle Rifle  |  500  |  %n/%n", game.get_deployment_occupied(9), game.get_deployment_limit(9))
+        end
+        if current_player.team == team[1] then
+            script_widget[17].set_text_for(current_player, "Elite Spec Ops Dualist  |  Dual Plasma Rifles  |  300  |  %n/%n", game.get_deployment_occupied(23), game.get_deployment_limit(23))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[17].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[17].set_color(current_player, 235, 240, 245, 255) end
+        class = 10
+        if current_player.team == team[1] then class = 24 end
+        if current_player.team == team[0] then
+            script_widget[18].set_text_for(current_player, "Spartan Breacher  |  Assault Rifle + Shotgun  |  500  |  %n/%n", game.get_deployment_occupied(10), game.get_deployment_limit(10))
+        end
+        if current_player.team == team[1] then
+            script_widget[18].set_text_for(current_player, "Elite Major  |  Plasma Rifle  |  350  |  %n/%n", game.get_deployment_occupied(24), game.get_deployment_limit(24))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[18].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[18].set_color(current_player, 235, 240, 245, 255) end
+        class = 11
+        if current_player.team == team[1] then class = 25 end
+        if current_player.team == team[0] then
+            script_widget[19].set_text_for(current_player, "Spartan Recon  |  Battle Rifle + Sniper Rifle  |  550  |  %n/%n", game.get_deployment_occupied(11), game.get_deployment_limit(11))
+        end
+        if current_player.team == team[1] then
+            script_widget[19].set_text_for(current_player, "Brute Chieftain  |  Gravity Hammer + Spiker  |  450  |  %n/%n", game.get_deployment_occupied(25), game.get_deployment_limit(25))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[19].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[19].set_color(current_player, 235, 240, 245, 255) end
+        class = 12
+        if current_player.team == team[1] then class = 26 end
+        if current_player.team == team[0] then
+            script_widget[20].set_text_for(current_player, "Spartan Heavy  |  Rocket Launcher + Assault Rifle  |  550  |  %n/%n", game.get_deployment_occupied(12), game.get_deployment_limit(12))
+        end
+        if current_player.team == team[1] then
+            script_widget[20].set_text_for(current_player, "War Chieftain Heavy  |  Fuel Rod Gun + Plasma Rifle  |  450  |  %n/%n", game.get_deployment_occupied(26), game.get_deployment_limit(26))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[20].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[20].set_color(current_player, 235, 240, 245, 255) end
+        class = 13
+        if current_player.team == team[1] then class = 27 end
+        if current_player.team == team[0] then
+            script_widget[21].set_text_for(current_player, "Spartan Laser Specialist  |  Spartan Laser + Battle Rifle  |  600  |  %n/%n", game.get_deployment_occupied(13), game.get_deployment_limit(13))
+        end
+        if current_player.team == team[1] then
+            script_widget[21].set_text_for(current_player, "Hunter  |  Hunter Cannon  |  700  |  %n/%n", game.get_deployment_occupied(27), game.get_deployment_limit(27))
+        end
+        scratch = game.get_deployment_cost(class)
+        script_widget[21].set_color(current_player, 110, 118, 130, 255)
+        if points >= scratch then script_widget[21].set_color(current_player, 235, 240, 245, 255) end
+    end
+    -- Waiting for a safe spawn, or deployed: the player's wallet.
+    script_widget[22].set_visibility(current_player, false)
+    if current_player.choosing == 0 and phase != 2 then
+        class = current_player.get_deployment_class()
+        if current_player.is_not_respawning() then
+            script_widget[22].set_text_for(current_player, "%n deployment points", current_player.get_deployment_points())
+        alt
+            if class == -1 then
+                script_widget[22].set_text_for(current_player, "Class selection in %n  |  %n deployment points", current_player.get_respawn_time(), current_player.get_deployment_points())
+            alt
+                script_widget[22].set_text_for(current_player, "Deployment confirmed. Waiting for the next safe spawn... %n points left", current_player.get_deployment_points())
+            end
+        end
+        script_widget[22].set_visibility(current_player, true)
+    end
+end
+
+-- Class health, shields and vehicle use, for every body the class gets.
+-- Tweak them here. Health and shields are percentages of the character's
+-- own (100 is as Halo 3 has it, 200 takes twice the damage); shields
+-- change only characters that have them (Spartans, Elites, Brutes).
+-- Vehicle use covers every seat of a vehicle, a Warthog's or Wraith's gun
+-- included; turrets are the stand-alone guns (machine-gun turret, plasma
+-- cannon, missile pod, Shade). Classes: 0-13 UNSC, 14-27 Covenant, in the
+-- order of the class picker.
+for each player do
+    class = current_player.get_deployment_class()
+    if class >= 0 then
+        current_player.set_max_health(100)
+        current_player.set_max_shields(100)
+        current_player.set_vehicle_use(true)
+        current_player.set_turret_use(true)
+        -- ODSTs: tougher than marines.
+        if class == 4 or class == 7 or class == 8 then
+            current_player.set_max_health(125)
+        end
+        -- Grunts and Jackals man turrets but don't drive or ride.
+        if class >= 14 and class <= 18 then
+            current_player.set_vehicle_use(false)
+        end
+        if class == 15 then
+            current_player.set_max_health(125)
+        end
+        -- Captains, Chieftains and Majors: stronger shields.
+        if class == 21 or class == 24 or class == 25 or class == 26 then
+            current_player.set_max_shields(125)
+        end
+        -- Hunters: twice the health, too big for any seat.
+        if class == 27 then
+            current_player.set_max_health(200)
+            current_player.set_vehicle_use(false)
+            current_player.set_turret_use(false)
+        end
+    end
+end

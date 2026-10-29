@@ -1,0 +1,768 @@
+{
+  "version": 1,
+  "name": "UNSC vs Covenant",
+  "mode": "Slayer",
+  "rules": {
+    "score_to_win": 0,
+    "kill_points": 1,
+    "death_points": 0,
+    "suicide_points": 0,
+    "betrayal_points": -1
+  },
+  "options": {
+    "rounds.teams": 1,
+    "rounds.limit": 1,
+    "rounds.minutes": 0,
+    "player.primary_weapon": 1,
+    "player.secondary_weapon": -1,
+    "player.grenades": 2,
+    "respawn.seconds": 5
+  },
+  "script": {
+    "version": 2,
+    "name": "UNSC vs Covenant",
+    "initial": [],
+    "logic": {
+      "deployment": {
+        "title": "UNSC vs Covenant",
+        "teams": [
+          "UNSC",
+          "Covenant"
+        ],
+        "classes": [
+          {
+            "name": "Marine Rifleman",
+            "description": "Standard infantry.",
+            "team": 0,
+            "cost": 0,
+            "biped": "marine",
+            "primary": "assault_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma1",
+            "camera": "third_person"
+          },
+          {
+            "name": "Marine Scout",
+            "description": "Cheap, mobile quality infantry.",
+            "team": 0,
+            "cost": 50,
+            "biped": "marine",
+            "primary": "smg",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma1",
+            "camera": "third_person",
+            "secondary": "magnum"
+          },
+          {
+            "name": "Marine Marksman",
+            "description": "Mid-range precision infantry.",
+            "team": 0,
+            "cost": 150,
+            "biped": "marine",
+            "primary": "battle_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma4",
+            "camera": "third_person"
+          },
+          {
+            "name": "Marine Breacher",
+            "description": "Close-quarters specialist.",
+            "team": 0,
+            "cost": 150,
+            "biped": "marine",
+            "primary": "shotgun",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma2",
+            "camera": "third_person",
+            "secondary": "magnum"
+          },
+          {
+            "name": "ODST",
+            "description": "Advanced general-purpose infantry.",
+            "team": 0,
+            "cost": 250,
+            "biped": "odst",
+            "primary": "battle_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 6,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "camera": "third_person",
+            "secondary": "smg"
+          },
+          {
+            "name": "Marine Heavy",
+            "description": "Heavy weapons and anti-vehicle support.",
+            "team": 0,
+            "cost": 250,
+            "biped": "marine",
+            "primary": "rocket_launcher",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma5",
+            "camera": "third_person",
+            "secondary": "assault_rifle"
+          },
+          {
+            "name": "Marine Sniper",
+            "description": "Dedicated long-range specialist.",
+            "team": 0,
+            "cost": 250,
+            "biped": "marine",
+            "primary": "sniper_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "ma4",
+            "camera": "third_person",
+            "secondary": "automag"
+          },
+          {
+            "name": "ODST Recon",
+            "description": "Versatile combat support.",
+            "team": 0,
+            "cost": 250,
+            "biped": "odst",
+            "primary": "smg_silenced",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 6,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "camera": "third_person",
+            "secondary": "automag"
+          },
+          {
+            "name": "ODST Heavy",
+            "description": "Heavy assault specialist.",
+            "team": 0,
+            "cost": 300,
+            "biped": "odst",
+            "primary": "shotgun",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 6,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "camera": "third_person",
+            "secondary": "rocket_launcher"
+          },
+          {
+            "name": "Spartan",
+            "description": "Elite frontline infantry.",
+            "team": 0,
+            "cost": 500,
+            "biped": "master_chief",
+            "primary": "assault_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "camera": "third_person",
+            "secondary": "battle_rifle"
+          },
+          {
+            "name": "Spartan Breacher",
+            "description": "Elite close-range infantry.",
+            "team": 0,
+            "cost": 500,
+            "biped": "master_chief",
+            "primary": "assault_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "camera": "third_person",
+            "secondary": "shotgun"
+          },
+          {
+            "name": "Spartan Recon",
+            "description": "Elite precision infantry.",
+            "team": 0,
+            "cost": 550,
+            "biped": "master_chief",
+            "primary": "battle_rifle",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "camera": "third_person",
+            "secondary": "sniper_rifle"
+          },
+          {
+            "name": "Spartan Heavy",
+            "description": "Elite anti-vehicle specialist.",
+            "team": 0,
+            "cost": 550,
+            "biped": "master_chief",
+            "primary": "rocket_launcher",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "camera": "third_person",
+            "secondary": "assault_rifle"
+          },
+          {
+            "name": "Spartan Laser Specialist",
+            "description": "Elite anti-vehicle specialist.",
+            "team": 0,
+            "cost": 600,
+            "biped": "master_chief",
+            "primary": "spartan_laser",
+            "grenades": [
+              2,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "camera": "third_person",
+            "secondary": "battle_rifle"
+          },
+          {
+            "name": "Grunt Minor",
+            "description": "Standard infantry.",
+            "team": 1,
+            "cost": 0,
+            "biped": "grunt",
+            "primary": "needler",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "minor",
+            "camera": "third_person"
+          },
+          {
+            "name": "Grunt Heavy",
+            "description": "Fragile but dangerous heavy weapons infantry.",
+            "team": 1,
+            "cost": 100,
+            "biped": "grunt",
+            "primary": "fuel_rod_gun",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "heavy",
+            "camera": "third_person"
+          },
+          {
+            "name": "Jackal Shieldbearer",
+            "description": "Defensive infantry.",
+            "team": 1,
+            "cost": 0,
+            "biped": "jackal",
+            "primary": "plasma_pistol",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "minor",
+            "camera": "third_person"
+          },
+          {
+            "name": "Jackal Carbine Specialist",
+            "description": "Early-game precision infantry and a counter to the UNSC Battle Rifle.",
+            "team": 1,
+            "cost": 0,
+            "biped": "jackal",
+            "primary": "carbine",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "sniper",
+            "camera": "third_person"
+          },
+          {
+            "name": "Jackal Sniper",
+            "description": "Long-range specialist.",
+            "team": 1,
+            "cost": 150,
+            "biped": "jackal",
+            "primary": "beam_rifle",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "sniper",
+            "camera": "third_person"
+          },
+          {
+            "name": "Brute Minor",
+            "description": "Aggressive frontline infantry.",
+            "team": 1,
+            "cost": 100,
+            "biped": "brute",
+            "primary": "spiker",
+            "grenades": [
+              0,
+              0,
+              2,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "minor",
+            "camera": "third_person",
+            "health": 2.5
+          },
+          {
+            "name": "Elite Minor",
+            "description": "Standard Elite infantry with energy shielding.",
+            "team": 1,
+            "cost": 150,
+            "biped": "elite_warrior",
+            "primary": "plasma_rifle",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 0,
+            "model_variant": "minor_scl",
+            "camera": "third_person"
+          },
+          {
+            "name": "Brute Captain",
+            "description": "Explosive-support infantry.",
+            "team": 1,
+            "cost": 300,
+            "biped": "brute",
+            "primary": "brute_shot",
+            "grenades": [
+              0,
+              0,
+              2,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 4,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 2,
+            "model_variant": "captain",
+            "camera": "third_person",
+            "health": 2.5,
+            "secondary": "carbine"
+          },
+          {
+            "name": "Elite Spec Ops",
+            "description": "Advanced infiltration and close-range combat.",
+            "team": 1,
+            "cost": 300,
+            "biped": "elite_warrior",
+            "primary": "carbine",
+            "grenades": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 2,
+            "model_variant": "spec_ops_scl",
+            "camera": "third_person",
+            "secondary": "energy_sword"
+          },
+          {
+            "name": "Elite Spec Ops Dualist",
+            "description": "Aggressive close-range combat.",
+            "team": 1,
+            "cost": 300,
+            "biped": "elite_warrior",
+            "primary": "plasma_rifle",
+            "grenades": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 2,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "model_variant": "spec_ops_scl",
+            "camera": "third_person",
+            "secondary": "plasma_rifle",
+            "dual_wield": true
+          },
+          {
+            "name": "Elite Major",
+            "description": "More experienced Elite with stronger shielding.",
+            "team": 1,
+            "cost": 350,
+            "biped": "elite_warrior",
+            "primary": "plasma_rifle",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 3,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 2,
+            "model_variant": "major_scl",
+            "camera": "third_person"
+          },
+          {
+            "name": "Brute Chieftain",
+            "description": "Heavy melee specialist and battlefield leader.",
+            "team": 1,
+            "cost": 450,
+            "biped": "brute",
+            "primary": "gravity_hammer",
+            "grenades": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 3,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "model_variant": "chieftain_armor",
+            "camera": "third_person",
+            "secondary": "spiker"
+          },
+          {
+            "name": "War Chieftain Heavy",
+            "description": "Premier Brute heavy weapons unit.",
+            "team": 1,
+            "cost": 450,
+            "biped": "brute",
+            "primary": "fuel_rod_gun",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 3,
+              "resistance": 8,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 1,
+            "model_variant": "chieftain_weapon",
+            "camera": "third_person",
+            "secondary": "plasma_rifle"
+          },
+          {
+            "name": "Hunter",
+            "description": "Campaign Hunter with its own particle cannon. One active Hunter for the Covenant.",
+            "team": 1,
+            "cost": 700,
+            "biped": "hunter",
+            "primary": "hunter_cannon",
+            "grenades": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 4,
+              "speed": 4,
+              "pickup": 2,
+              "vehicles": 1,
+              "radar": 3
+            },
+            "max_active": 1,
+            "model_variant": "minor",
+            "camera": "third_person",
+            "health": 4.0
+          }
+        ],
+        "script_menu": true
+      },
+      "options": {
+        "points_per_kill": {
+          "value": 50,
+          "min": 1,
+          "max": 1000
+        },
+        "reinforcements": {
+          "value": 150,
+          "min": 10,
+          "max": 1000
+        },
+        "round_seconds": {
+          "value": 600,
+          "min": 60,
+          "max": 3600
+        }
+      }
+    }
+  }
+}
