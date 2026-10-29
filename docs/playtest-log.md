@@ -29,3 +29,8 @@ A stand-in Grunt body acts as leader: it walks back and forth and is deleted 15 
 - [ ] Jackal Major / Elite / Brute: HUD shows "Squad: 0 followers"
 - [ ] Any script fault or odd leader behaviour (note it here)
 Real multi-player squad assignment (slot limits, one Grunt Heavy) is written but cannot be tested solo.
+
+## E1 result so far (2026-10-29, Avalanche, solo, stand-in Grunt body)
+Readout "died X, spawned Y": 33/38, 39/16, 38/28. Spawned 16-38 units from the stand-in, so
+set_primary_respawn_object did NOT put the player beside the script-made Grunt body (normal
+spawns). Next: same test with a Ghost as the anchor (object type may matter).

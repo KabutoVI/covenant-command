@@ -536,7 +536,7 @@ if script_option[5] == 1 then
     if seconds > 15 and global.object[0] == no_object then
         for each player do
             if current_player.team == team[1] and current_player.biped != no_object and global.object[0] == no_object then
-                global.object[0] = current_player.biped.place_at_me(grunt, "dummy_leader", never_garbage_collect, 40, 0, 5, none)
+                global.object[0] = current_player.biped.place_at_me(ghost, "dummy_leader", never_garbage_collect, 40, 0, 5, none)
             end
         end
     end
