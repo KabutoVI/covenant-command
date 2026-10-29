@@ -29,6 +29,7 @@ alias safe_dist = global.number[7]
 alias remaining = global.timer[0]
 alias income = global.timer[1]
 alias dbg_cycle = global.timer[2]
+alias dbg_type = global.timer[3]
 alias kills = player.number[0]
 alias deaths = player.number[1]
 -- 1 while the player chooses a class, and 1 while their picker is drawn.
@@ -525,18 +526,36 @@ end
 -- A follower with no leader spawns normally. With squad_debug on, a script-made
 -- Grunt body stands in as leader so one player can test alone.
 
--- Debug leader: stands still where it was placed, and is deleted for 15 seconds of every 60.
+-- Debug anchor: stands still where it was placed and is deleted for 10 seconds of
+-- every 45. The anchor type changes each cycle: 0 ghost, 1 permanent grav lift, 2
+-- deployable cover, so one session shows which kind of script-made object the
+-- engine accepts as a respawn point.
 if script_option[5] == 1 then
     if dbg_cycle.is_zero() then
-        dbg_cycle = 60
+        dbg_cycle = 45
         dbg_cycle.set_rate(-100%)
     end
     seconds = dbg_cycle
-    if seconds <= 15 then global.object[0].delete() end
-    if seconds > 15 and global.object[0] == no_object then
+    if seconds <= 10 and global.object[0] != no_object then
+        global.object[0].delete()
+        found = dbg_type
+        found += 1
+        if found > 2 then found = 0 end
+        dbg_type = found
+    end
+    if seconds > 10 and global.object[0] == no_object then
+        found = dbg_type
         for each player do
             if current_player.team == team[1] and current_player.biped != no_object and global.object[0] == no_object then
-                global.object[0] = current_player.biped.place_at_me(ghost, "dummy_leader", never_garbage_collect, 40, 0, 5, none)
+                if found == 0 then
+                    global.object[0] = current_player.biped.place_at_me(ghost, "dummy_leader", never_garbage_collect, 40, 0, 5, none)
+                end
+                if found == 1 then
+                    global.object[0] = current_player.biped.place_at_me(grav_lift_permanent, "dummy_leader", never_garbage_collect, 40, 0, 0, none)
+                end
+                if found == 2 then
+                    global.object[0] = current_player.biped.place_at_me(deployable_cover, "dummy_leader", never_garbage_collect, 40, 0, 0, none)
+                end
             end
         end
     end
@@ -667,7 +686,10 @@ for each player do
                 script_widget[24].set_text_for(current_player, "No squad leader")
                 -- Debug stand-in leader is an object, not a player.
                 if script_option[5] == 1 and global.object[0] != no_object then
-                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy)")
+                    found = dbg_type
+                    if found == 0 then script_widget[24].set_text_for(current_player, "Anchor: GHOST") end
+                    if found == 1 then script_widget[24].set_text_for(current_player, "Anchor: GRAV LIFT") end
+                    if found == 2 then script_widget[24].set_text_for(current_player, "Anchor: DEPLOYABLE COVER") end
                 end
                 if script_option[5] == 1 and global.object[0] == no_object then
                     script_widget[24].set_text_for(current_player, "Leader: down (test dummy)")
