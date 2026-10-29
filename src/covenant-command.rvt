@@ -657,6 +657,13 @@ for each player do
         if current_player.role != 3 then
             if current_player.leader == no_player then
                 script_widget[24].set_text_for(current_player, "No squad leader")
+                -- Debug stand-in leader is an object, not a player.
+                if script_option[5] == 1 and global.object[0] != no_object then
+                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy)")
+                end
+                if script_option[5] == 1 and global.object[0] == no_object then
+                    script_widget[24].set_text_for(current_player, "Leader: down (test dummy)")
+                end
             end
             if current_player.leader != no_player then
                 if current_player.leader.biped != no_object then
