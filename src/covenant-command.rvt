@@ -41,6 +41,10 @@ alias prev_class = player.number[5]
 alias jackals = player.number[6]
 alias heavy = player.number[7]
 alias leader = player.player[0]
+alias last_body = player.object[0]
+alias live_dist = player.timer[0]
+alias spawn_dist = player.timer[1]
+alias death_dist = player.timer[2]
 
 on init: do
     -- CC: options are indexed alphabetically: 0 cov_income_pct, 1 cov_reinforcement_pct,
@@ -60,6 +64,10 @@ on init: do
     script_widget[24].set_anchor(all_players, bottom_left)
     script_widget[24].set_color(all_players, 190, 150, 255, 255)
     script_widget[24].set_font_size(all_players, 14)
+    script_widget[25].set_position(all_players, 24, 652)
+    script_widget[25].set_anchor(all_players, bottom_left)
+    script_widget[25].set_color(all_players, 255, 220, 120, 255)
+    script_widget[25].set_font_size(all_players, 14)
     income = 30
     -- Reinforcement bars and the battle line, for everyone.
     script_widget[0].set_position(all_players, 628, 18)
@@ -657,9 +665,7 @@ for each player do
                 script_widget[24].set_text_for(current_player, "No squad leader")
                 -- Debug stand-in leader is an object, not a player.
                 if script_option[5] == 1 and global.object[0] != no_object then
-                    scratch = current_player.biped.get_distance_to(global.object[0])
-                    scratch /= 10
-                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy), %n units away", scratch)
+                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy)")
                 end
                 if script_option[5] == 1 and global.object[0] == no_object then
                     script_widget[24].set_text_for(current_player, "Leader: down (test dummy)")
@@ -675,5 +681,22 @@ for each player do
             end
         end
         script_widget[24].set_visibility(current_player, true)
+    end
+    -- Debug readout: distance to the stand-in at the end of the last life, at this
+    -- life's spawn, and now. The timers only store numbers: 0 live, 1 spawn, 2 death.
+    script_widget[25].set_visibility(current_player, false)
+    if script_option[5] == 1 and current_player.biped != no_object and global.object[0] != no_object then
+        scratch = current_player.biped.get_distance_to(global.object[0])
+        scratch /= 10
+        if current_player.last_body != current_player.biped then
+            current_player.spawn_dist = scratch
+            current_player.death_dist = current_player.live_dist
+            current_player.last_body = current_player.biped
+        end
+        current_player.live_dist = scratch
+        found = current_player.death_dist
+        fits = current_player.spawn_dist
+        script_widget[25].set_text_for(current_player, "Died %n away, spawned %n away, now %n", found, fits, scratch)
+        script_widget[25].set_visibility(current_player, true)
     end
 end
