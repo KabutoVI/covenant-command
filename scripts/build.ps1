@@ -2,7 +2,8 @@
 # mode-compile never overwrites, so any previous output is moved to a timestamped name first.
 param(
     [string]$ClientExe,
-    [string]$Name = 'TACTICAL Covenant vs UNSC'
+    [string]$Name = 'TACTICAL Covenant vs UNSC',
+    [switch]$SquadDebug
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -18,6 +19,12 @@ if (-not $ClientExe) {
 
 $src = Join-Path $root 'src\covenant-command.rvt'
 $tpl = Join-Path $root 'src\template.json'
+if ($SquadDebug) {
+    # Solo testing: default squad_debug to 1 in a throwaway copy of the template.
+    $tmp = Join-Path $root 'build\template.debug.json'
+    (Get-Content $tpl -Raw) -replace '(?s)(\"squad_debug\": \{\s*\"value\": )0','${1}1' | Set-Content $tmp
+    $tpl = $tmp
+}
 $out = Join-Path $root 'build\covenant-command.json'
 
 if (Test-Path $out) {
@@ -32,3 +39,4 @@ if ($LASTEXITCODE) { throw 'mode-compile failed' }
 & $ClientExe mode-check $out
 if ($LASTEXITCODE) { throw 'mode-check failed' }
 Write-Host "Built $out"
+

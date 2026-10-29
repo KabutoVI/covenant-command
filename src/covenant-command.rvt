@@ -20,13 +20,27 @@ alias class = global.number[8]
 -- CC: Covenant pool size (the bar's maximum) and per-tick income.
 alias cov_max = global.number[9]
 alias cov_income = global.number[10]
+-- CC: Reach allows 12 global numbers, so the squad code (appended at the end of the
+-- script, after the picker has used them) borrows slots that are rewritten every tick.
+alias found = global.number[6]
+alias fits = global.number[3]
+alias unsafe = global.number[4]
+alias safe_dist = global.number[7]
 alias remaining = global.timer[0]
 alias income = global.timer[1]
+alias dbg_cycle = global.timer[2]
 alias kills = player.number[0]
 alias deaths = player.number[1]
 -- 1 while the player chooses a class, and 1 while their picker is drawn.
 alias choosing = player.number[2]
 alias picker = player.number[3]
+-- CC: squads. A follower reuses grunts as its previous class; leaders recount it.
+alias role = player.number[4]
+alias grunts = player.number[5]
+alias prev_class = player.number[5]
+alias jackals = player.number[6]
+alias heavy = player.number[7]
+alias leader = player.player[0]
 
 on init: do
     -- CC: options are indexed alphabetically: 0 cov_income_pct, 1 cov_reinforcement_pct,
@@ -41,6 +55,11 @@ on init: do
     cov_income += 50
     cov_income /= 100
     remaining = script_option[4]
+    -- CC: options 5 squad_debug and 6 squad_safe_radius (Forge units, x10 for distances).
+    script_widget[24].set_position(all_players, 24, 674)
+    script_widget[24].set_anchor(all_players, bottom_left)
+    script_widget[24].set_color(all_players, 190, 150, 255, 255)
+    script_widget[24].set_font_size(all_players, 14)
     income = 30
     -- Reinforcement bars and the battle line, for everyone.
     script_widget[0].set_position(all_players, 628, 18)
@@ -196,6 +215,12 @@ if phase != 2 then
     if phase == 0 then
         script_widget[2].set_text("Waiting for both factions")
         if unsc_players > 0 and covenant_players > 0 then
+            phase = 1
+            remaining.set_rate(-100%)
+            income.set_rate(-100%)
+        end
+        -- CC: with squad_debug the battle starts for a lone Covenant player.
+        if script_option[5] == 1 and covenant_players > 0 and phase == 0 then
             phase = 1
             remaining.set_rate(-100%)
             income.set_rate(-100%)
@@ -481,5 +506,167 @@ for each player do
             current_player.set_vehicle_use(false)
             current_player.set_turret_use(false)
         end
+    end
+end
+
+-- CC: F2 squads. Covenant Grunts and Jackals follow a leader and respawn beside
+-- his living body. Roles come from the class: 1 Grunt follower, 2 Jackal follower,
+-- 3 leader, 0 none. Counts are rebuilt every tick so leaving players free slots.
+-- Leaders: Brute Minor/Captain/Chieftain/War Chieftain, Elite Minor/Major (3 Grunts,
+-- 2 Jackals) and the starter Jackal Major, class 28 (2 Grunts, 2 Jackals).
+-- A follower with no leader spawns normally. With squad_debug on, a script-made
+-- Grunt body stands in as leader so one player can test alone.
+
+-- Debug leader: walks back and forth, then is deleted for 15 seconds of every 60.
+if script_option[5] == 1 then
+    if dbg_cycle.is_zero() then
+        dbg_cycle = 60
+        dbg_cycle.set_rate(-100%)
+    end
+    seconds = dbg_cycle
+    if seconds <= 15 then global.object[0].delete() end
+    if seconds > 15 and global.object[0] == no_object then
+        for each player do
+            if current_player.team == team[1] and current_player.biped != no_object and global.object[0] == no_object then
+                global.object[0] = current_player.biped.place_at_me(grunt, "dummy_leader", never_garbage_collect, 40, 0, 0, none)
+            end
+        end
+    end
+    if seconds > 38 then global.object[0].set_velocity(3, 0, 0) end
+    if seconds <= 38 and seconds > 15 then global.object[0].set_velocity(-3, 0, 0) end
+end
+
+-- Roles; leaders have their counts zeroed, followers who changed class are unlinked.
+for each player do
+    class = current_player.get_deployment_class()
+    current_player.role = 0
+    if class == 14 or class == 15 then current_player.role = 1 end
+    if class >= 16 and class <= 18 then current_player.role = 2 end
+    if class == 19 or class == 20 or class == 21 or class == 24 or class == 25 or class == 26 or class == 28 then
+        current_player.role = 3
+    end
+    if current_player.role == 3 then
+        current_player.grunts = 0
+        current_player.jackals = 0
+        current_player.heavy = 0
+    end
+    if current_player.role == 1 or current_player.role == 2 then
+        if current_player.prev_class != class then
+            current_player.leader = no_player
+            current_player.prev_class = class
+        end
+    end
+    if current_player.role == 0 or current_player.role == 3 then
+        current_player.leader = no_player
+    end
+end
+
+-- Count current squads, dropping followers whose leader is gone or changed role.
+for each player do
+    if current_player.role == 1 or current_player.role == 2 then
+        if current_player.leader != no_player then
+            if current_player.leader.role != 3 then current_player.leader = no_player end
+        end
+        if current_player.leader != no_player then
+            if current_player.role == 1 then current_player.leader.grunts += 1 end
+            if current_player.role == 2 then current_player.leader.jackals += 1 end
+            if current_player.prev_class == 15 then current_player.leader.heavy += 1 end
+        end
+    end
+end
+
+-- Followers without a leader look for one with a free slot, Elite and Brute
+-- squads first, then Jackal Major squads.
+for each player do
+    if current_player.role == 1 or current_player.role == 2 then
+        if current_player.leader == no_player then
+            global.player[0] = current_player
+            found = 0
+            for each player do
+                if found == 0 and current_player.role == 3 then
+                    scratch = current_player.get_deployment_class()
+                    if scratch != 28 then
+                        fits = 0
+                        if global.player[0].role == 1 and current_player.grunts < 3 then fits = 1 end
+                        if global.player[0].role == 2 and current_player.jackals < 2 then fits = 1 end
+                        if global.player[0].prev_class == 15 and current_player.heavy > 0 then fits = 0 end
+                        if fits == 1 then
+                            global.player[0].leader = current_player
+                            if global.player[0].role == 1 then current_player.grunts += 1 end
+                            if global.player[0].role == 2 then current_player.jackals += 1 end
+                            if global.player[0].prev_class == 15 then current_player.heavy += 1 end
+                            found = 1
+                        end
+                    end
+                end
+            end
+            for each player do
+                if found == 0 and current_player.role == 3 then
+                    scratch = current_player.get_deployment_class()
+                    if scratch == 28 then
+                        fits = 0
+                        if global.player[0].role == 1 and current_player.grunts < 2 then fits = 1 end
+                        if global.player[0].role == 2 and current_player.jackals < 2 then fits = 1 end
+                        if global.player[0].prev_class == 15 and current_player.heavy > 0 then fits = 0 end
+                        if fits == 1 then
+                            global.player[0].leader = current_player
+                            if global.player[0].role == 1 then current_player.grunts += 1 end
+                            if global.player[0].role == 2 then current_player.jackals += 1 end
+                            if global.player[0].prev_class == 15 then current_player.heavy += 1 end
+                            found = 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Respawn beside the leader's living body, unless an enemy is close to him.
+for each player do
+    if current_player.role != 1 and current_player.role != 2 then
+        current_player.set_primary_respawn_object(no_object)
+    end
+    if current_player.role == 1 or current_player.role == 2 then
+        current_player.set_primary_respawn_object(no_object)
+        if current_player.leader != no_player then
+            unsafe = 0
+            safe_dist = script_option[6]
+            safe_dist *= 10
+            global.player[0] = current_player
+            for each player do
+                if current_player.team == team[0] and current_player.biped != no_object and global.player[0].leader.biped != no_object then
+                    scratch = global.player[0].leader.biped.get_distance_to(current_player.biped)
+                    if scratch > 0 and scratch <= safe_dist then unsafe = 1 end
+                end
+            end
+            if unsafe == 0 then current_player.set_primary_respawn_object(current_player.leader.biped) end
+        end
+        if current_player.leader == no_player and script_option[5] == 1 then
+            current_player.set_primary_respawn_object(global.object[0])
+        end
+    end
+    -- Squad line.
+    script_widget[24].set_visibility(current_player, false)
+    if current_player.choosing == 0 and phase != 2 and current_player.role > 0 then
+        if current_player.role == 3 then
+            scratch = current_player.grunts
+            scratch += current_player.jackals
+            script_widget[24].set_text_for(current_player, "Squad: %n followers", scratch)
+        end
+        if current_player.role != 3 then
+            if current_player.leader == no_player then
+                script_widget[24].set_text_for(current_player, "No squad leader")
+            end
+            if current_player.leader != no_player then
+                if current_player.leader.biped != no_object then
+                    script_widget[24].set_text_for(current_player, "Leader: alive")
+                end
+                if current_player.leader.biped == no_object then
+                    script_widget[24].set_text_for(current_player, "Leader: down")
+                end
+            end
+        end
+        script_widget[24].set_visibility(current_player, true)
     end
 end
