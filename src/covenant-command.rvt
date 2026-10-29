@@ -517,7 +517,7 @@ end
 -- A follower with no leader spawns normally. With squad_debug on, a script-made
 -- Grunt body stands in as leader so one player can test alone.
 
--- Debug leader: walks back and forth, then is deleted for 15 seconds of every 60.
+-- Debug leader: stands still where it was placed, and is deleted for 15 seconds of every 60.
 if script_option[5] == 1 then
     if dbg_cycle.is_zero() then
         dbg_cycle = 60
@@ -532,8 +532,6 @@ if script_option[5] == 1 then
             end
         end
     end
-    if seconds > 38 then global.object[0].set_velocity(3, 0, 0) end
-    if seconds <= 38 and seconds > 15 then global.object[0].set_velocity(-3, 0, 0) end
 end
 
 -- Roles; leaders have their counts zeroed, followers who changed class are unlinked.
@@ -659,7 +657,9 @@ for each player do
                 script_widget[24].set_text_for(current_player, "No squad leader")
                 -- Debug stand-in leader is an object, not a player.
                 if script_option[5] == 1 and global.object[0] != no_object then
-                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy)")
+                    scratch = current_player.biped.get_distance_to(global.object[0])
+                    scratch /= 10
+                    script_widget[24].set_text_for(current_player, "Leader: alive (test dummy), %n units away", scratch)
                 end
                 if script_option[5] == 1 and global.object[0] == no_object then
                     script_widget[24].set_text_for(current_player, "Leader: down (test dummy)")
