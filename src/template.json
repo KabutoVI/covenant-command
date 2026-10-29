@@ -413,7 +413,7 @@
             "name": "Grunt Heavy",
             "description": "Fragile but dangerous heavy weapons infantry.",
             "team": 1,
-            "cost": 100,
+            "cost": 0,
             "biped": "grunt",
             "primary": "fuel_rod_gun",
             "grenades": [
@@ -742,11 +742,46 @@
             "model_variant": "minor",
             "camera": "third_person",
             "health": 4.0
+          },
+          {
+            "name": "Jackal Major",
+            "description": "Starter squad leader with a free Beam Rifle.",
+            "team": 1,
+            "cost": 0,
+            "biped": "jackal",
+            "primary": "beam_rifle",
+            "grenades": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "traits": {
+              "shields": 1,
+              "resistance": 7,
+              "speed": 5,
+              "pickup": 2,
+              "vehicles": 3,
+              "radar": 3
+            },
+            "max_active": 4,
+            "model_variant": "major",
+            "camera": "third_person"
           }
         ],
         "script_menu": true
       },
       "options": {
+        "cov_income_pct": {
+          "value": 150,
+          "min": 100,
+          "max": 300
+        },
+        "cov_reinforcement_pct": {
+          "value": 150,
+          "min": 100,
+          "max": 300
+        },
         "points_per_kill": {
           "value": 50,
           "min": 1,

@@ -17,6 +17,9 @@ alias scratch = global.number[5]
 alias points = global.number[6]
 alias seconds = global.number[7]
 alias class = global.number[8]
+-- CC: Covenant pool size (the bar's maximum) and per-tick income.
+alias cov_max = global.number[9]
+alias cov_income = global.number[10]
 alias remaining = global.timer[0]
 alias income = global.timer[1]
 alias kills = player.number[0]
@@ -26,9 +29,18 @@ alias choosing = player.number[2]
 alias picker = player.number[3]
 
 on init: do
-    unsc = script_option[1]
-    covenant = script_option[1]
-    remaining = script_option[2]
+    -- CC: options are indexed alphabetically: 0 cov_income_pct, 1 cov_reinforcement_pct,
+    -- 2 points_per_kill, 3 reinforcements, 4 round_seconds.
+    unsc = script_option[3]
+    covenant = script_option[3]
+    covenant *= script_option[1]
+    covenant /= 100
+    cov_max = covenant
+    cov_income = script_option[0]
+    cov_income *= 25
+    cov_income += 50
+    cov_income /= 100
+    remaining = script_option[4]
     income = 30
     -- Reinforcement bars and the battle line, for everyone.
     script_widget[0].set_position(all_players, 628, 18)
@@ -124,6 +136,11 @@ on init: do
     script_widget[21].set_size(all_players, 270, 88)
     script_widget[21].set_background(all_players, 15, 27, 39, 255)
     script_widget[21].set_clickable(all_players, true)
+    -- CC: fifteenth Covenant card, third column of the last row.
+    script_widget[23].set_position(all_players, 650, 532)
+    script_widget[23].set_size(all_players, 270, 88)
+    script_widget[23].set_background(all_players, 15, 27, 39, 255)
+    script_widget[23].set_clickable(all_players, true)
 end
 
 -- A click on a card deploys its class, when the player may.
@@ -133,6 +150,14 @@ on widget click: do
         class -= 8
         if current_player.team == team[1] then class += 14 end
         scratch = current_player.deploy_class(class)
+        if scratch == 0 then
+            script_widget[6].set_text_for(current_player, "That class costs more points than you have, or it is full.")
+            script_widget[6].set_color(current_player, 255, 120, 100, 255)
+        end
+    end
+    -- CC: the Jackal Major card (widget 23) is Covenant class 28.
+    if clicked_widget == 23 and current_player.team == team[1] then
+        scratch = current_player.deploy_class(28)
         if scratch == 0 then
             script_widget[6].set_text_for(current_player, "That class costs more points than you have, or it is full.")
             script_widget[6].set_color(current_player, 255, 120, 100, 255)
@@ -151,7 +176,7 @@ if phase != 2 then
         scratch = current_player.get_kill_count()
         scratch -= current_player.kills
         if scratch > 0 then
-            scratch *= script_option[0]
+            scratch *= script_option[2] -- CC: was [0]
             points = current_player.get_deployment_points()
             points += scratch
             if points > 100000 then points = 100000 end
@@ -201,6 +226,11 @@ if phase != 2 then
             if current_player.team == team[0] or current_player.team == team[1] then
                 points = current_player.get_deployment_points()
                 points += 25
+                -- CC: Covenant earns passive income scaled by cov_income_pct.
+                if current_player.team == team[1] then
+                    points -= 25
+                    points += cov_income
+                end
                 if points > 100000 then points = 100000 end
                 current_player.set_deployment_points(points)
             end
@@ -209,9 +239,9 @@ if phase != 2 then
         income.set_rate(-100%)
     end
     script_widget[0].set_text("UNSC  %n", unsc)
-    script_widget[0].set_meter_params(number, unsc, script_option[1])
+    script_widget[0].set_meter_params(number, unsc, script_option[3])
     script_widget[1].set_text("%n  COVENANT", covenant)
-    script_widget[1].set_meter_params(number, covenant, script_option[1])
+    script_widget[1].set_meter_params(number, covenant, cov_max)
     script_widget[0].set_visibility(all_players, true)
     script_widget[1].set_visibility(all_players, true)
     script_widget[2].set_visibility(all_players, true)
@@ -244,7 +274,7 @@ for each player do
             script_widget[4].set_text_for(current_player, "COVENANT  -  CHOOSE YOUR CLASS")
             script_widget[3].set_border(current_player, 190, 150, 255, 140)
             script_widget[8].set_text_for(current_player, "Grunt Minor  |  Needler  |  FREE")
-            script_widget[9].set_text_for(current_player, "Grunt Heavy  |  Fuel Rod Gun  |  100")
+            script_widget[9].set_text_for(current_player, "Grunt Heavy  |  Fuel Rod Gun  |  FREE")  -- CC: was 100
             script_widget[10].set_text_for(current_player, "Jackal Shieldbearer  |  Plasma Pistol  |  FREE")
             script_widget[11].set_text_for(current_player, "Jackal Carbine Specialist  |  Carbine  |  FREE")
             script_widget[12].set_text_for(current_player, "Jackal Sniper  |  Beam Rifle  |  150")
@@ -278,7 +308,13 @@ for each player do
     script_widget[19].set_visibility(current_player, current_player.choosing)
     script_widget[20].set_visibility(current_player, current_player.choosing)
     script_widget[21].set_visibility(current_player, current_player.choosing)
+    -- CC: the Jackal Major card shows for Covenant players only.
+    script_widget[23].set_visibility(current_player, current_player.choosing)
+    if current_player.team == team[0] then script_widget[23].set_visibility(current_player, false) end
     if current_player.choosing == 1 then
+        if current_player.team == team[1] then
+            script_widget[23].set_text_for(current_player, "Jackal Major  |  Beam Rifle  |  FREE  |  %n/%n", game.get_deployment_occupied(28), game.get_deployment_limit(28))
+        end
         points = current_player.get_deployment_points()
         script_widget[5].set_text_for(current_player, "%n DEPLOYMENT POINTS", points)
         class = 0
@@ -426,6 +462,10 @@ for each player do
         end
         -- Grunts and Jackals man turrets but don't drive or ride.
         if class >= 14 and class <= 18 then
+            current_player.set_vehicle_use(false)
+        end
+        -- CC: Jackal Major is class 28
+        if class == 28 then
             current_player.set_vehicle_use(false)
         end
         if class == 15 then
