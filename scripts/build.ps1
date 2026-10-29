@@ -3,7 +3,8 @@
 param(
     [string]$ClientExe,
     [string]$Name = 'TACTICAL Covenant vs UNSC',
-    [switch]$SquadDebug
+    [switch]$SquadDebug,
+    [int]$AnchorType = 0
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -22,7 +23,7 @@ $tpl = Join-Path $root 'src\template.json'
 if ($SquadDebug) {
     # Solo testing: default squad_debug to 1 in a throwaway copy of the template.
     $tmp = Join-Path $root 'build\template.debug.json'
-    (Get-Content $tpl -Raw) -replace '(?s)(\"squad_debug\": \{\s*\"value\": )0','${1}1' | Set-Content $tmp
+    (Get-Content $tpl -Raw) -replace '(?s)(\"squad_debug\": \{\s*\"value\": )0','${1}1' -replace '(?s)(\"squad_type\": \{\s*\"value\": )0',('${1}' + $AnchorType) | Set-Content $tmp
     $tpl = $tmp
 }
 $out = Join-Path $root 'build\covenant-command.json'
@@ -39,4 +40,5 @@ if ($LASTEXITCODE) { throw 'mode-compile failed' }
 & $ClientExe mode-check $out
 if ($LASTEXITCODE) { throw 'mode-check failed' }
 Write-Host "Built $out"
+
 

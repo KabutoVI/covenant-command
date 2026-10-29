@@ -527,9 +527,9 @@ end
 -- Grunt body stands in as leader so one player can test alone.
 
 -- Debug anchor: stands still where it was placed and is deleted for 10 seconds of
--- every 45. The anchor type changes each cycle: 0 ghost, 1 permanent grav lift, 2
--- deployable cover, so one session shows which kind of script-made object the
--- engine accepts as a respawn point.
+-- every 45. Option 7 squad_type picks the object: 0 ghost, 1 permanent grav lift,
+-- 2 deployable cover. One type per build, because an object the map lacks stops
+-- the whole script.
 if script_option[5] == 1 then
     if dbg_cycle.is_zero() then
         dbg_cycle = 45
@@ -538,13 +538,9 @@ if script_option[5] == 1 then
     seconds = dbg_cycle
     if seconds <= 10 and global.object[0] != no_object then
         global.object[0].delete()
-        found = dbg_type
-        found += 1
-        if found > 2 then found = 0 end
-        dbg_type = found
     end
     if seconds > 10 and global.object[0] == no_object then
-        found = dbg_type
+        found = script_option[7]
         for each player do
             if current_player.team == team[1] and current_player.biped != no_object and global.object[0] == no_object then
                 if found == 0 then
@@ -559,8 +555,8 @@ if script_option[5] == 1 then
             end
         end
     end
-    -- Script-made bodies have no collision; cancel gravity every tick so it stays put.
-    global.object[0].set_velocity(0, 0, 0)
+    -- A Ghost is pushed around by physics; keep it still. Equipment is left alone.
+    if script_option[7] == 0 then global.object[0].set_velocity(0, 0, 0) end
 end
 
 -- Roles; leaders have their counts zeroed, followers who changed class are unlinked.
@@ -686,7 +682,7 @@ for each player do
                 script_widget[24].set_text_for(current_player, "No squad leader")
                 -- Debug stand-in leader is an object, not a player.
                 if script_option[5] == 1 and global.object[0] != no_object then
-                    found = dbg_type
+                    found = script_option[7]
                     if found == 0 then script_widget[24].set_text_for(current_player, "Anchor: GHOST") end
                     if found == 1 then script_widget[24].set_text_for(current_player, "Anchor: GRAV LIFT") end
                     if found == 2 then script_widget[24].set_text_for(current_player, "Anchor: DEPLOYABLE COVER") end
