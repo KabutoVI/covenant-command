@@ -765,7 +765,7 @@
               "radar": 3
             },
             "max_active": 4,
-            "model_variant": "major",
+            "model_variant": "shieldless",
             "camera": "third_person"
           }
         ],
