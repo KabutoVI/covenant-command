@@ -1,0 +1,4 @@
+build/*
+!build/.gitkeep
+local.config
+*.log
