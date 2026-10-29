@@ -41,7 +41,7 @@ alias prev_class = player.number[5]
 alias jackals = player.number[6]
 alias heavy = player.number[7]
 alias leader = player.player[0]
-alias last_body = player.object[0]
+alias dead_flag = player.timer[3]
 alias live_dist = player.timer[0]
 alias spawn_dist = player.timer[1]
 alias death_dist = player.timer[2]
@@ -690,10 +690,12 @@ for each player do
     if script_option[5] == 1 and current_player.biped != no_object and global.object[0] != no_object then
         scratch = current_player.biped.get_distance_to(global.object[0])
         scratch /= 10
-        -- last_body holds the previous tick's body, so no_object there means just spawned.
-        if current_player.last_body == no_object then
+        -- dead_flag is 1 from the moment of death until the first tick alive again.
+        found = current_player.dead_flag
+        if found == 1 then
             current_player.spawn_dist = scratch
             current_player.death_dist = current_player.live_dist
+            current_player.dead_flag = 0
         end
         current_player.live_dist = scratch
         found = current_player.death_dist
@@ -701,5 +703,5 @@ for each player do
         script_widget[25].set_text_for(current_player, "Died %n away, spawned %n away, now %n", found, fits, scratch)
         script_widget[25].set_visibility(current_player, true)
     end
-    current_player.last_body = current_player.biped
+    if current_player.biped == no_object then current_player.dead_flag = 1 end
 end
