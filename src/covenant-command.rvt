@@ -690,10 +690,10 @@ for each player do
     if script_option[5] == 1 and current_player.biped != no_object and global.object[0] != no_object then
         scratch = current_player.biped.get_distance_to(global.object[0])
         scratch /= 10
-        if current_player.last_body != current_player.biped then
+        -- last_body holds the previous tick's body, so no_object there means just spawned.
+        if current_player.last_body == no_object then
             current_player.spawn_dist = scratch
             current_player.death_dist = current_player.live_dist
-            current_player.last_body = current_player.biped
         end
         current_player.live_dist = scratch
         found = current_player.death_dist
@@ -701,4 +701,5 @@ for each player do
         script_widget[25].set_text_for(current_player, "Died %n away, spawned %n away, now %n", found, fits, scratch)
         script_widget[25].set_visibility(current_player, true)
     end
+    current_player.last_body = current_player.biped
 end
