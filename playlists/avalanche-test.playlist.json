@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "name": "Avalanche Test",
+  "games": [
+    { "map": "avalanche", "game": "Game Modes/covenant-command.json" },
+    { "map": "avalanche", "game": "Slayer" },
+    { "map": "avalanche", "game": "Capture the Flag" }
+  ]
+}
