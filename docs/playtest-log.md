@@ -34,3 +34,15 @@ Real multi-player squad assignment (slot limits, one Grunt Heavy) is written but
 Readout "died X, spawned Y": 33/38, 39/16, 38/28. Spawned 16-38 units from the stand-in, so
 set_primary_respawn_object did NOT put the player beside the script-made Grunt body (normal
 spawns). Next: same test with a Ghost as the anchor (object type may matter).
+
+## Direction change (2026-10-29)
+Leader-body/anchor respawn did not redirect spawns in solo tests (Grunt body: spawned 16-38 units away) and
+Ghost/grav-lift anchors stopped the script on Avalanche. Squad respawn is now OFF by default
+(option squad_use_leader_spawn = 0); code kept for a later 2+ player test. Debug anchor only with squad_debug.
+New cohesion features instead, both teams:
+- Shared kill points: living teammates within team_share_radius (30) get team_share_pct (50%) of a kill's points.
+- Squad waypoints: Covenant leaders and UNSC Spartan classes get waypoint(allies) + team-colour aura.
+Checklist (need 2+ players to see them):
+- [ ] Kill near a teammate: teammate's points rise by half the kill reward; far teammate gets nothing
+- [ ] Leader/Spartan has a team-colour glow and waypoint visible to allies, not to enemies
+- [ ] Class picker, respawns and rounds behave as in Phase 3 (no first-person-Spartan fallback = no script fault)

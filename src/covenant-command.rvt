@@ -209,6 +209,27 @@ if phase != 2 then
             points += scratch
             if points > 100000 then points = 100000 end
             current_player.set_deployment_points(points)
+            -- CC: living teammates within team_share_radius get team_share_pct of the
+            -- kill points. seconds is the share, scratch the radius in tenths of units.
+            seconds = scratch
+            seconds *= script_option[9]
+            seconds /= 100
+            scratch = script_option[10]
+            scratch *= 10
+            if seconds > 0 and current_player.biped != no_object then
+                global.player[0] = current_player
+                for each player do
+                    if current_player.team == global.player[0].team and current_player != global.player[0] and current_player.biped != no_object then
+                        class = global.player[0].biped.get_distance_to(current_player.biped)
+                        if class > 0 and class <= scratch then
+                            points = current_player.get_deployment_points()
+                            points += seconds
+                            if points > 100000 then points = 100000 end
+                            current_player.set_deployment_points(points)
+                        end
+                    end
+                end
+            end
         end
         current_player.kills = current_player.get_kill_count()
         scratch = current_player.get_death_count()
@@ -573,6 +594,10 @@ for each player do
         current_player.jackals = 0
         current_player.heavy = 0
     end
+    -- Squad waypoints: Covenant leaders and the UNSC Spartan classes (9-13) are shown
+    -- to their allies with a team-colour aura (script_traits[0]). Awareness only.
+    if current_player.role == 3 then current_player.apply_traits(script_traits[0]) end
+    if class >= 9 and class <= 13 then current_player.apply_traits(script_traits[0]) end
     if current_player.role == 1 or current_player.role == 2 then
         if current_player.prev_class != class then
             current_player.leader = no_player
@@ -646,7 +671,12 @@ for each player do
 end
 
 -- Respawn beside the leader's living body, unless an enemy is close to him.
+-- Off by default (option 8 squad_use_leader_spawn): script-made anchors did not
+-- redirect spawns in solo tests and real-leader spawning could not be tested.
+fits = 0
+if script_option[8] == 1 or script_option[5] == 1 then fits = 1 end
 for each player do
+    if fits == 1 then
     if current_player.role != 1 and current_player.role != 2 then
         current_player.set_primary_respawn_object(no_object)
     end
@@ -668,6 +698,7 @@ for each player do
         if current_player.leader == no_player and script_option[5] == 1 then
             current_player.set_primary_respawn_object(global.object[0])
         end
+    end
     end
     -- Squad line.
     script_widget[24].set_visibility(current_player, false)
