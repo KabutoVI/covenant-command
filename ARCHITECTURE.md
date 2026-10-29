@@ -56,7 +56,7 @@ Everything is built with Project Reclaimer's documented scripting. No binary pat
 | Compiled mode | `build/covenant-command.json` | Host's `Game Modes` folder or a server's `content/Game Modes` |
 | Map (optional) | Saved Forge map `.json` | Server `content/Maps`; reaches players automatically on join |
 
-Players download nothing for the mode. They need Halo 3 campaign installed in MCC (campaign characters) and the same Project Reclaimer version as the server. Pin development to 0.9.23 and record it in `upstream/VERSION.txt`.
+Players download nothing for the mode. They need Halo 3 campaign installed in MCC (campaign characters) and the same Project Reclaimer version as the server. Pin development to 0.9.23 and record it in the README.
 
 Toolchain commands, from the client folder:
 
@@ -206,8 +206,7 @@ The project is kept under git with upstream files kept pristine so new Project R
 covenant-command\
   README.md                  what it is, how to build, how to test
   ARCHITECTURE.md            this document, exported
-  upstream\
-    VERSION.txt              Project Reclaimer version the files came from
+  upstream\                  not in git; scripts\update-upstream.ps1 downloads these for diffing
     megalo-faction-battlefront.rvt
     faction-battlefront-template.json
   src\
