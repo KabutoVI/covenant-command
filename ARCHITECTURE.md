@@ -1,6 +1,28 @@
 # TACTICAL Covenant vs UNSC: Architecture
 
-Oct 28, 2026 · @Ingo Varela
+Oct 28, 2026 · updated Oct 29, 2026 · @Ingo Varela
+
+## Current status (Oct 29, 2026)
+
+**The UNSC side has not been started.** Everything built so far targets the Covenant experience. The UNSC roster, costs, economy, reinforcements and vehicles are exactly as upstream ships them. The only things that reach UNSC players are two team-agnostic cohesion features (F6), and they are still untested with more than one player.
+
+This is an early prototype: the mode compiles and loads, but only solo checks have been done. Nothing below has been playtested with a full lobby.
+
+| Piece | State |
+| --- | --- |
+| Phase 1: setup, upstream baseline compiles on 0.9.23 | Done |
+| F1 Asymmetric reinforcements (`cov_reinforcement_pct`) | Written; in-game check pending |
+| F3 Covenant economy (`cov_income_pct`) | Written; in-game check pending |
+| F5 Roster rework (Jackal Major as class 28, free Grunt Heavy) | Written; in-game check pending. The Major's look was changed once because it showed the minor model with an arm shield |
+| F2 Squad leaders | Written, but **spawning on the leader did not work in solo tests**, so it is off by default (see E1). Slot rules and HUD remain in the code |
+| F6 Team cohesion (shared kill points, ally waypoints) | Written; needs 2 or more players to test |
+| F4 Call-in vehicles | Not started |
+| UNSC-side design and changes | **Not started** |
+| Phases 5 to 8 (vehicles, polish, playtest, publish) | Not started |
+
+See [CHANGELOG.md](CHANGELOG.md) for how we got here and [docs/playtest-log.md](docs/playtest-log.md) for the test checklists.
+
+The sections below are the original design. Where reality has diverged, a **Status** line says so.
 
 ## Overview
 
@@ -111,6 +133,8 @@ The Covenant pool becomes `reinforcements × cov_reinforcement_pct / 100`.
 
 ### F2. Squad leaders
 
+**Status:** squad assignment, slot limits and HUD are written. The respawn-on-leader mechanic is off by default (`squad_use_leader_spawn` = 0). In solo tests on Avalanche, `set_primary_respawn_object` did not put the player beside a script-made body (spawns landed 16 to 38 units away), and a Ghost or grav lift as the anchor stopped the script. It has not been tried with 2 or more real players, so the idea is parked, not disproved.
+
 Followers respawn beside their living leader; with no living leader they use normal spawns.
 
 - Roles come from the roster table in Base and are looked up with `get_deployment_class()`.
@@ -165,6 +189,15 @@ The roster changes in Base's table are template edits, plus one new class.
 - The script's class picker draws one card per class, so the new class needs its card added wherever the base script lays out Covenant cards (found in Phase 0).
 - Done when: the Covenant picker shows 15 classes, the Jackal Major spawns with a Beam Rifle at 0 points, and a fifth Jackal Major is refused while 4 are active.
 
+### F6. Team cohesion (added Oct 29)
+
+Added after F2's spawn mechanic failed in solo tests. It applies to both teams and does not change stats.
+
+- **Shared kill points:** living teammates within `team_share_radius` (default 30) of a kill receive `team_share_pct` (default 50%) of its points.
+- **Ally waypoints:** Covenant leaders and the UNSC Spartan classes show to their allies with a team-colour aura. Awareness only.
+- New options: `team_share_pct`, `team_share_radius`.
+- Done when (needs 2 or more players): a teammate near a kill gains half the reward, a far one gains nothing, and the waypoint is visible to allies but not to enemies.
+
 ## Repo layout
 
 The project is kept under git with upstream files kept pristine so new Project Reclaimer releases can be diffed and merged.
@@ -184,14 +217,16 @@ covenant-command\
   scripts\
     build.ps1                megalo-check, mode-compile, mode-check; versions old output
     deploy-local.ps1         copies the build to Game Modes and starts local-server
+    play.ps1                 opens the client so you can join the local server
     update-upstream.ps1      downloads current upstream files for a diff
-  experiments\
-    e1-respawn-on-leader.rvt and one file per experiment, each with a results note
+  playlists\                 test playlists (avalanche-test.playlist.json)
+  experiments\               reserved for standalone experiment scripts (empty so far; E1 ran inside src\ via the debug build)
   maps\                      exported Forge saved maps (.json), backed up after every session
   docs\
-    base-script-notes.md     Phase 0 reading of the upstream script
-    balance.md               option values tried and why
-    playtest-log.md          date, players, map, result, notes
+    base-script-notes.md     planned, not written yet
+    balance.md               planned, not written yet
+    playtest-log.md          date, players, map, result, notes, test checklists
+  CHANGELOG.md               what changed and why
 ```
 
 Conventions:
@@ -199,20 +234,21 @@ Conventions:
 - `build.ps1` takes the client executable path as a parameter or reads it from a gitignored `local.config`; nothing hardcodes a user path.
 - Every change to `src/` that touches upstream logic carries a `-- CC:` comment so upstream merges can find our edits.
 - `.gitignore`: `build/`, `local.config`, logs.
+- Debug builds: `build.ps1 -SquadDebug` turns on the solo stand-in leader and readout; `-AnchorType` picks the stand-in object (0 ghost, 1 grav lift, 2 deployable cover).
 - One commit per feature phase, tagged `phase-N` once its exit criteria pass.
 
 ## Build phases
 
 Each phase ends playable and is tagged in git only when its exit check passes.
 
-1. **Setup.** Create the repo, download upstream files, write `build.ps1` and `deploy-local.ps1`. Exit: the unmodified upstream compiles from `src/` and plays identically to the bundled mode on `local-server`.
-2. **Read and probe.** Write `docs/base-script-notes.md`; run experiments E1 to E4. Exit: every experiment has a recorded result.
-3. **Numbers and roster.** F1 asymmetric reinforcements, F3 Covenant economy, F5 roster rework. Exit: all three done-when checks pass.
-4. **Squads.** F2 squad leaders. Exit: F2 done-when check passes in a 3-player test.
-5. **Vehicles.** F4 call-ins and the supported map list. Exit: F4 done-when check passes on every listed map.
-6. **Polish.** HUD text, mode description, server welcome lines. Exit: a new player understands squads and call-in keys without being told.
-7. **Playtest.** 8 to 16 players on our own server, options and costs tuned between rounds, results in `playtest-log.md`. Exit: the Covenant wins between 4 and 6 of 10 rounds.
-8. **Publish.** See Testing, hosting and publishing.
+1. **Setup (done).** Create the repo, download upstream files, write `build.ps1` and `deploy-local.ps1`. Exit: the unmodified upstream compiles from `src/` and plays identically to the bundled mode on `local-server`.
+2. **Read and probe (partly done).** Write `docs/base-script-notes.md`; run experiments E1 to E4. Exit: every experiment has a recorded result.
+3. **Numbers and roster (written, in-game checks pending).** F1 asymmetric reinforcements, F3 Covenant economy, F5 roster rework. Exit: all three done-when checks pass.
+4. **Squads (written; spawn mechanic parked, see E1).** F2 squad leaders. Exit: F2 done-when check passes in a 3-player test.
+5. **Vehicles (not started).** F4 call-ins and the supported map list. Exit: F4 done-when check passes on every listed map.
+6. **Polish (not started).** HUD text, mode description, server welcome lines. Exit: a new player understands squads and call-in keys without being told.
+7. **Playtest (not started).** 8 to 16 players on our own server, options and costs tuned between rounds, results in `playtest-log.md`. Exit: the Covenant wins between 4 and 6 of 10 rounds.
+8. **Publish (not started).** See Testing, hosting and publishing.
 
 ## Experiments and risks
 
@@ -220,9 +256,9 @@ Four unknowns are settled by small test scripts before feature work. Each lives 
 
 | ID | Question | Why it matters |
 | --- | --- | --- |
-| E1 | Does `set_primary_respawn_object` accept a teammate's moving body, and what happens when that body dies or becomes a corpse? | F2 depends on it; a corpse reference could spawn followers on a dead leader |
+| E1 | Does `set_primary_respawn_object` accept a teammate's moving body, and what happens when that body dies or becomes a corpse? | F2 depends on it; a corpse reference could spawn followers on a dead leader. **Result so far (solo, Avalanche): a script-made Grunt body did not redirect spawns; Ghost and grav lift anchors stopped the script. A real 2-player test is still needed.** |
 | E2 | Which target maps have `ghost`, `chopper`, `mongoose`, `warthog` and `plasma_cannon_emplacement`? | A missing name stops the script for the round |
-| E3 | Do new options shift the base script's `script_option` indices? | A silent shift breaks reinforcements or kill points |
+| E3 | Do new options shift the base script's `script_option` indices? | A silent shift breaks reinforcements or kill points. **Result: yes, they shifted in Phase 3 and the reads were updated.** |
 | E4 | Which `global` and `player` variable slots does the base script leave free? | F2, F4 and F5 need player numbers, timers and object slots |
 
 Known risks:

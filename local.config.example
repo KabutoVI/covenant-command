@@ -1,6 +1,6 @@
 # Copy to local.config (gitignored) and edit. Read by scripts\*.ps1.
 # Client folder = the live Project Reclaimer install (read-only reference, never edited).
 ClientDir=C:\path\to\Halo The Master Chief Collection
-ClientExe=project-reclaimer-client-v0.9.18.exe
+ClientExe=project-reclaimer-client-<your version>.exe
 # Game Modes folder the host loads from (used by deploy-local.ps1; see README).
 GameModesDir=
