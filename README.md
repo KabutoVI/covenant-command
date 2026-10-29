@@ -8,7 +8,8 @@ Status: Phase 1 (Setup). Scaffold only; no script yet.
 
 1. Copy `local.config.example` to `local.config` and set the client path.
 2. `scripts\update-upstream.ps1` to fetch the upstream files into `upstream\`, then copy them to `src\` as `covenant-command.rvt` / `template.json`.
-3. `scripts\build.ps1`, then `scripts\deploy-local.ps1`.
+3. `scripts\build.ps1`, then `scripts\deploy-local.ps1` (headless local server on Guardian).
+4. In a second window run `scripts\play.ps1` to open the client and join from the Server Browser. Log results in `docs\playtest-log.md`.
 
 ## Notes
 
