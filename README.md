@@ -14,4 +14,4 @@ Status: Phase 1 (Setup). Scaffold only; no script yet.
 
 - Distribute only our own source; game files and the Project Reclaimer client are not part of this repo.
 - Mark every edit to upstream logic with a `-- CC:` comment.
-- Pinned Project Reclaimer version: see `upstream\VERSION.txt` (design targets 0.9.23; local client is 0.9.18).
+- Pinned Project Reclaimer version: see `upstream\VERSION.txt` (0.9.23; the local exe filename still says v0.9.18 but its metadata is 0.9.23).
