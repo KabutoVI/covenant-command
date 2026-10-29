@@ -536,10 +536,12 @@ if script_option[5] == 1 then
     if seconds > 15 and global.object[0] == no_object then
         for each player do
             if current_player.team == team[1] and current_player.biped != no_object and global.object[0] == no_object then
-                global.object[0] = current_player.biped.place_at_me(grunt, "dummy_leader", never_garbage_collect, 40, 0, 0, none)
+                global.object[0] = current_player.biped.place_at_me(grunt, "dummy_leader", never_garbage_collect, 40, 0, 5, none)
             end
         end
     end
+    -- Script-made bodies have no collision; cancel gravity every tick so it stays put.
+    global.object[0].set_velocity(0, 0, 0)
 end
 
 -- Roles; leaders have their counts zeroed, followers who changed class are unlinked.
